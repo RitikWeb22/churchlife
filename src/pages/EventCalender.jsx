@@ -8,7 +8,7 @@ const EventCalendar = () => {
 
   // Vite environment variable or fallback
   // Example: VITE_API_URL = "http://localhost:5000"
-  const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseUrl ="https://churchbackendlife.onrender.com";
 
   // Utility to prepend baseUrl if path is relative
   const fixUrl = (path) => {
