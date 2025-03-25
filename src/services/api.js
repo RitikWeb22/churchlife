@@ -12,38 +12,54 @@ const api = axios.create({
 });
 
 // ------------------------------
-// CSRF Token Helper
+// CSRF Token Helper with Caching
 // ------------------------------
+let cachedCsrfToken = null;
+
 export const getCsrfToken = async () => {
+  if (cachedCsrfToken) return cachedCsrfToken;
   try {
     const { data } = await api.get("/csrf-token");
-    return data.csrfToken;
+    cachedCsrfToken = data.csrfToken;
+    return cachedCsrfToken;
   } catch (error) {
     console.error("Failed to fetch CSRF token:", error);
     throw error;
   }
 };
 
+// Optionally, you might want to clear the cache on certain error responses.
+// For example, in an interceptor you can check if error.response.status === 403,
+// and then reset cachedCsrfToken = null.
+
 // ------------------------------
 // Axios Wrapper for Consistent API Calls
 // ------------------------------
 const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
   try {
-    const csrfToken = await getCsrfToken();
+    // Only attach the CSRF token if needed (e.g., for non-GET requests).
+    const headers = { ...extraHeaders };
+    if (method.toLowerCase() !== "get") {
+      const csrfToken = await getCsrfToken();
+      headers["x-csrf-token"] = csrfToken;
+    }
     const config = {
       method,
       url,
       data,
-      headers: { "x-csrf-token": csrfToken, ...extraHeaders },
+      headers,
     };
     const response = await api(config);
     return response.data;
   } catch (error) {
     console.error(`API Error: ${method.toUpperCase()} ${url}`, error);
+    // Optionally clear the CSRF token cache if error indicates an invalid token
+    if (error.response && error.response.status === 403) {
+      cachedCsrfToken = null;
+    }
     throw error;
   }
 };
-
 
 // ------------------------------
 // Books Endpoints
@@ -62,7 +78,7 @@ export const createBook = async (bookData, images = []) => {
   images.forEach((imgFile) => formData.append("images", imgFile));
 
   return apiCall("post", "/books", formData, {
-    "Content-Type": "multipart/form-data",
+    // Do not set Content-Type manually for FormData.
   });
 };
 
@@ -71,9 +87,7 @@ export const updateBook = async (id, bookData, images = []) => {
   Object.keys(bookData).forEach((key) => formData.append(key, bookData[key]));
   images.forEach((img) => formData.append("images", img));
 
-  return apiCall("put", `/books/${id}`, formData, {
-    "Content-Type": "multipart/form-data",
-  });
+  return apiCall("put", `/books/${id}`, formData);
 };
 
 export const deleteBook = async (id) => {
@@ -152,7 +166,7 @@ export const verifyOTP = async (data) => {
 export const uploadFile = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
-  return apiCall("post", "/upload", formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("post", "/upload", formData);
 };
 
 // ------------------------------
@@ -174,14 +188,11 @@ export const createAnnouncement = async (payload, imageFile) => {
   if (imageFile) {
     formData.append("image", imageFile);
   }
-  // Remove "Content-Type" header for FormData; let the browser set it automatically.
   return apiCall("post", "/announcements", formData);
 };
 
 export const createRegistration = async (regData) => {
-  return apiCall("post", "/event-registrations", regData, {
-    "Content-Type": "application/json",
-  });
+  return apiCall("post", "/event-registrations", regData, { "Content-Type": "application/json" });
 };
 
 export const getRegistrations = async () => {
@@ -208,7 +219,7 @@ export const createCalendar = async (calendarData, imageFile) => {
   if (imageFile) {
     formData.append("image", imageFile);
   }
-  return apiCall("post", "/calendars", formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("post", "/calendars", formData);
 };
 
 export const updateCalendar = async (id, calendarData, imageFile) => {
@@ -220,7 +231,7 @@ export const updateCalendar = async (id, calendarData, imageFile) => {
   if (imageFile) {
     formData.append("image", imageFile);
   }
-  return apiCall("put", `/calendars/${id}`, formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("put", `/calendars/${id}`, formData);
 };
 
 export const deleteCalendar = async (id) => {
@@ -241,7 +252,7 @@ export const purchaseCalendar = async (purchaseData, screenshotFile) => {
       formData.append("screenshot", screenshotFile);
     }
   }
-  return apiCall("post", "/calendar-purchases", formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("post", "/calendar-purchases", formData);
 };
 
 export const getPurchases = async () => {
@@ -259,7 +270,6 @@ export const getContacts = async () => {
   return apiCall("get", "/contacts");
 };
 
-// New: Delete Contact Endpoint
 export const deleteContact = async (id) => {
   return apiCall("delete", `/contacts/${id}`);
 };
@@ -274,7 +284,7 @@ export const getContactBanner = async () => {
 export const uploadContactBanner = async (bannerFile) => {
   const formData = new FormData();
   formData.append("banner", bannerFile);
-  return apiCall("post", "/contact-banner", formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("post", "/contact-banner", formData);
 };
 
 // ------------------------------
@@ -285,7 +295,6 @@ export const getHomeConfig = async () => {
   return apiCall("get", "/home");
 };
 
-// For updates that include file uploads (PUT)
 export const updateHomeConfig = async (data, files = {}) => {
   const formData = new FormData();
 
@@ -293,7 +302,6 @@ export const updateHomeConfig = async (data, files = {}) => {
     formData.append("mainText", data.mainText);
   }
   if (data.sections !== undefined) {
-    // Stringify if sections is not a string already
     const sectionsValue =
       typeof data.sections === "string" ? data.sections : JSON.stringify(data.sections);
     formData.append("sections", sectionsValue);
@@ -302,11 +310,8 @@ export const updateHomeConfig = async (data, files = {}) => {
     formData.append("bannerTitle", data.bannerTitle);
   }
   if (data.latestUpdates !== undefined) {
-    // Ensure latestUpdates is stringified (e.g. JSON string) if it's not already a string
     const updatesValue =
-      typeof data.latestUpdates === "string"
-        ? data.latestUpdates
-        : JSON.stringify(data.latestUpdates);
+      typeof data.latestUpdates === "string" ? data.latestUpdates : JSON.stringify(data.latestUpdates);
     formData.append("latestUpdates", updatesValue);
   }
   if (files.eventCalendarPdf) {
@@ -315,14 +320,12 @@ export const updateHomeConfig = async (data, files = {}) => {
     console.warn("No eventCalendarPdf file found in files object");
   }
 
-  return apiCall("put", "/home", formData, { "Content-Type": "multipart/form-data" });
+  return apiCall("put", "/home", formData);
 };
 
-// For text-only updates (PATCH)
 export const updateHomeText = async (data) => {
   return apiCall("patch", "/home/text", data, { "Content-Type": "application/json" });
 };
-
 
 // ------------------------------
 // Phone-based Verification Endpoints
