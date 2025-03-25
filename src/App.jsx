@@ -21,6 +21,7 @@ import Dashboard from "./Dashboard/Dashboard";
 import BookDetailPage from "./pages/Books/BookDetailPage";
 import CategoryPage from "./components/CategoryPage";
 import ChurchCalenderMain from "./pages/ChurchCalenderMain";
+import EventCelender from "./pages/eventCalender";
 import ProtectedRoute from "./Contexts/ProtectedRoute";
 import ErrorPage from "./pages/ErrorPage";
 
@@ -48,6 +49,7 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/calendar-events" element={<ChurchEventsPage />} />
+        <Route path="/event-calender" element={<EventCelender />} />
         <Route
           path="/event-register-form"
           element={<MergedRegistrationForm />}
