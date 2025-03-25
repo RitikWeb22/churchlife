@@ -1,0 +1,128 @@
+/* Tailwind base, components, utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake;
+}
+/* Global reset + box-sizing */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+/* Ensure html/body fill the viewport */
+
+/* Carousel thumbnail styling (e.g., react-image-carousel or similar) */
+.carousel .thumb {
+  border: 1px solid transparent; /* or set to none if you want no border */
+}
+.carousel .thumb.selected,
+.carousel .thumb:hover {
+  border: 1px solid #ccc; /* Change as desired */
+}
+
+/* Marquee body with hidden overflow */
+.marquee-body {
+  height: 12rem; /* Adjust as needed */
+  overflow: hidden;
+  position: relative;
+}
+
+/* The scrolling content (vertical marquee) */
+.marquee-content {
+  position: absolute;
+  animation: verticalMarquee 10s linear infinite;
+  width: 100%;
+}
+
+/* Keyframes for vertical scrolling (bottom to top) */
+@keyframes verticalMarquee {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Track color */
+}
+::-webkit-scrollbar-thumb {
+  /* background-color: purple; Thumb color */
+  border-radius: 8px; /* Rounded corners */
+  border: 1px solid #f1f1f1; /* Optional: adds contrast around thumb */
+}
+
+/* Scrollbar styling for Firefox */
+html {
+  scrollbar-width: thin; /* thin thin scrollbar */
+  /* scrollbar-color: purple #f1f1f1; Thumb + track color */
+}
+
+/* Print styles: Hide everything except #invoicebody */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #invoicebody,
+  #invoicebody * {
+    visibility: visible !important;
+  }
+  #invoicebody {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+}
+.body {
+  overflow-y: scroll; /* Force scrollbar even if not needed */
+}
+
+/* Chrome, Safari, and modern Edge */
+.body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.body::-webkit-scrollbar-thumb {
+  /* background-color: purple; */
+  border-radius: 8px;
+  border: 1px solid #f1f1f1;
+}
+
+/* Firefox */
+.body {
+  scrollbar-width: thin;
+  /* scrollbar-color: purple #f1f1f1; */
+}
+
+@keyframes verticalMarquee {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+.animate-verticalMarquee {
+  animation: verticalMarquee 10s linear infinite;
+}
+
+.group:hover .animate-verticalMarquee {
+  animation-play-state: paused;
+}
