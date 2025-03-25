@@ -21,7 +21,7 @@ import Dashboard from "./Dashboard/Dashboard";
 import BookDetailPage from "./pages/Books/BookDetailPage";
 import CategoryPage from "./components/CategoryPage";
 import ChurchCalenderMain from "./pages/ChurchCalenderMain";
-import EventCelender from "./pages/eventCalender";
+import EventCelender from "./pages/EventCalender";
 import ProtectedRoute from "./Contexts/ProtectedRoute";
 import ErrorPage from "./pages/ErrorPage";
 
