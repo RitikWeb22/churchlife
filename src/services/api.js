@@ -28,26 +28,49 @@ export const getCsrfToken = async () => {
   }
 };
 
-// Optionally, you might want to clear the cache on certain error responses.
-// For example, in an interceptor you can check if error.response.status === 403,
-// and then reset cachedCsrfToken = null.
+// ------------------------------
+// Axios Interceptors for Request and Response
+// ------------------------------
+
+// Request Interceptor: Automatically attach CSRF token for non-GET requests.
+api.interceptors.request.use(
+  async (config) => {
+    // Only add the CSRF token for non-GET requests
+    if (config.method && config.method.toLowerCase() !== "get") {
+      try {
+        const token = await getCsrfToken();
+        config.headers["x-csrf-token"] = token;
+      } catch (error) {
+        // Optionally handle token fetch errors
+        console.error("CSRF token error in interceptor:", error);
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Clear cached CSRF token on 403 Forbidden responses.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      cachedCsrfToken = null;
+    }
+    return Promise.reject(error);
+  }
+);
 
 // ------------------------------
 // Axios Wrapper for Consistent API Calls
 // ------------------------------
 const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
   try {
-    const headers = { ...extraHeaders };
-    if (method.toLowerCase() !== "get") {
-      const csrfToken = await getCsrfToken();
-      headers["x-csrf-token"] = csrfToken;
-    }
-
     const config = {
       method,
       url,
       data,
-      headers,
+      headers: { ...extraHeaders },
     };
 
     const response = await api(config);
@@ -58,115 +81,81 @@ const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
     } else {
       console.error(`API Error: ${method.toUpperCase()} ${url}`, error.message);
     }
-
-    // Reset CSRF token if forbidden error
-    if (error.response && error.response.status === 403) {
-      cachedCsrfToken = null;
-    }
-
     throw error;
   }
 };
 
-    // Optionally clear the CS
 // ------------------------------
 // Books Endpoints
 // ------------------------------
-export const getBooks = async () => {
-  return apiCall("get", "/books");
-};
+export const getBooks = async () => apiCall("get", "/books");
 
-export const getBookById = async (id) => {
-  return apiCall("get", `/books/${id}`);
-};
+export const getBookById = async (id) => apiCall("get", `/books/${id}`);
 
 export const createBook = async (bookData, images = []) => {
   const formData = new FormData();
   Object.keys(bookData).forEach((key) => formData.append(key, bookData[key]));
   images.forEach((imgFile) => formData.append("images", imgFile));
-
-  return apiCall("post", "/books", formData, {
-    // Do not set Content-Type manually for FormData.
-  });
+  return apiCall("post", "/books", formData);
 };
 
 export const updateBook = async (id, bookData, images = []) => {
   const formData = new FormData();
   Object.keys(bookData).forEach((key) => formData.append(key, bookData[key]));
   images.forEach((img) => formData.append("images", img));
-
   return apiCall("put", `/books/${id}`, formData);
 };
 
-export const deleteBook = async (id) => {
-  return apiCall("delete", `/books/${id}`);
-};
+export const deleteBook = async (id) => apiCall("delete", `/books/${id}`);
 
 // ------------------------------
 // Payment & Borrow Endpoints for Books
 // ------------------------------
-export const borrowBook = async (borrowData) => {
-  return apiCall("post", "/books/borrow", borrowData, {
+export const borrowBook = async (borrowData) =>
+  apiCall("post", "/books/borrow", borrowData, {
     "Content-Type": "application/json",
   });
-};
 
 // ------------------------------
 // Categories Endpoints
 // ------------------------------
-export const getCategories = async () => {
-  return apiCall("get", "/categories");
-};
+export const getCategories = async () => apiCall("get", "/categories");
 
-export const addCategory = async (name) => {
-  return apiCall("post", "/categories", { name }, { "Content-Type": "application/json" });
-};
+export const addCategory = async (name) =>
+  apiCall("post", "/categories", { name }, { "Content-Type": "application/json" });
 
-export const removeCategory = async (name) => {
-  return apiCall("delete", `/categories/${name}`);
-};
+export const removeCategory = async (name) => apiCall("delete", `/categories/${name}`);
 
-export const getBooksByCategory = async (category) => {
-  return apiCall("get", `/books/category/${category}`);
-};
+export const getBooksByCategory = async (category) =>
+  apiCall("get", `/books/category/${category}`);
 
 // ------------------------------
 // Users & Auth Endpoints
 // ------------------------------
-export const getUsers = async () => {
-  return apiCall("get", "/auth");
-};
+export const getUsers = async () => apiCall("get", "/auth");
 
-export const loginUser = async (loginData) => {
-  return apiCall("post", "/auth/login", loginData, { "Content-Type": "application/json" });
-};
+export const loginUser = async (loginData) =>
+  apiCall("post", "/auth/login", loginData, { "Content-Type": "application/json" });
 
-export const registerUser = async (registerData) => {
-  return apiCall("post", "/auth/register", registerData, { "Content-Type": "application/json" });
-};
+export const registerUser = async (registerData) =>
+  apiCall("post", "/auth/register", registerData, { "Content-Type": "application/json" });
 
-export const deleteUser = async (id) => {
-  return apiCall("delete", `/users/${id}`);
-};
+export const deleteUser = async (id) => apiCall("delete", `/users/${id}`);
 
-export const updateUserRole = async (id, role) => {
-  return apiCall("put", `/users/${id}/role`, { role }, { "Content-Type": "application/json" });
-};
+export const updateUserRole = async (id, role) =>
+  apiCall("put", `/users/${id}/role`, { role }, { "Content-Type": "application/json" });
 
-export const updateUser = async (id, data) => {
-  return apiCall("put", `/users/${id}`, data, { "Content-Type": "application/json" });
-};
+export const updateUser = async (id, data) =>
+  apiCall("put", `/users/${id}`, data, { "Content-Type": "application/json" });
 
 // ------------------------------
 // OTP & Google Auth Endpoints
 // ------------------------------
-export const sendOTP = async (data) => {
-  return apiCall("post", "/auth/send-otp", data, { "Content-Type": "application/json" });
-};
+export const sendOTP = async (data) =>
+  apiCall("post", "/auth/send-otp", data, { "Content-Type": "application/json" });
 
-export const verifyOTP = async (data) => {
-  return apiCall("post", "/auth/verify-otp", data, { "Content-Type": "application/json" });
-};
+export const verifyOTP = async (data) =>
+  apiCall("post", "/auth/verify-otp", data, { "Content-Type": "application/json" });
 
 // ------------------------------
 // File Upload Endpoint
@@ -180,9 +169,8 @@ export const uploadFile = async (file) => {
 // ------------------------------
 // Import Books Endpoint
 // ------------------------------
-export const importBooks = async (books) => {
-  return apiCall("post", "/books/import", books, { "Content-Type": "application/json" });
-};
+export const importBooks = async (books) =>
+  apiCall("post", "/books/import", books, { "Content-Type": "application/json" });
 
 // ------------------------------
 // Announcements & Event Registrations Endpoints
@@ -199,24 +187,18 @@ export const createAnnouncement = async (payload, imageFile) => {
   return apiCall("post", "/announcements", formData);
 };
 
-export const createRegistration = async (regData) => {
-  return apiCall("post", "/event-registrations", regData, { "Content-Type": "application/json" });
-};
+export const createRegistration = async (regData) =>
+  apiCall("post", "/event-registrations", regData, { "Content-Type": "application/json" });
 
-export const getRegistrations = async () => {
-  return apiCall("get", "/event-registrations");
-};
+export const getRegistrations = async () => apiCall("get", "/event-registrations");
 
-export const deleteRegistration = async (id) => {
-  return apiCall("delete", `/event-registrations/${id}`);
-};
+export const deleteRegistration = async (id) =>
+  apiCall("delete", `/event-registrations/${id}`);
 
 // ------------------------------
 // Church Calendar Endpoints
 // ------------------------------
-export const getChurchCalendars = async () => {
-  return apiCall("get", "/calendars");
-};
+export const getChurchCalendars = async () => apiCall("get", "/calendars");
 
 export const createCalendar = async (calendarData, imageFile) => {
   const formData = new FormData();
@@ -242,9 +224,8 @@ export const updateCalendar = async (id, calendarData, imageFile) => {
   return apiCall("put", `/calendars/${id}`, formData);
 };
 
-export const deleteCalendar = async (id) => {
-  return apiCall("delete", `/calendars/${id}`);
-};
+export const deleteCalendar = async (id) =>
+  apiCall("delete", `/calendars/${id}`);
 
 export const purchaseCalendar = async (purchaseData, screenshotFile) => {
   const formData = new FormData();
@@ -263,31 +244,23 @@ export const purchaseCalendar = async (purchaseData, screenshotFile) => {
   return apiCall("post", "/calendar-purchases", formData);
 };
 
-export const getPurchases = async () => {
-  return apiCall("get", "/calendar-purchases");
-};
+export const getPurchases = async () => apiCall("get", "/calendar-purchases");
 
 // ------------------------------
 // Contact Endpoints
 // ------------------------------
-export const createContact = async (contactData) => {
-  return apiCall("post", "/contacts", contactData, { "Content-Type": "application/json" });
-};
+export const createContact = async (contactData) =>
+  apiCall("post", "/contacts", contactData, { "Content-Type": "application/json" });
 
-export const getContacts = async () => {
-  return apiCall("get", "/contacts");
-};
+export const getContacts = async () => apiCall("get", "/contacts");
 
-export const deleteContact = async (id) => {
-  return apiCall("delete", `/contacts/${id}`);
-};
+export const deleteContact = async (id) =>
+  apiCall("delete", `/contacts/${id}`);
 
 // ------------------------------
 // Contact Banner Endpoints
 // ------------------------------
-export const getContactBanner = async () => {
-  return apiCall("get", "/contact-banner");
-};
+export const getContactBanner = async () => apiCall("get", "/contact-banner");
 
 export const uploadContactBanner = async (bannerFile) => {
   const formData = new FormData();
@@ -331,9 +304,8 @@ export const updateHomeConfig = async (data, files = {}) => {
   return apiCall("put", "/home", formData);
 };
 
-export const updateHomeText = async (data) => {
-  return apiCall("patch", "/home/text", data, { "Content-Type": "application/json" });
-};
+export const updateHomeText = async (data) =>
+  apiCall("patch", "/home/text", data, { "Content-Type": "application/json" });
 
 // ------------------------------
 // Phone-based Verification Endpoints
@@ -347,36 +319,28 @@ export const checkNumberExists = async (phone) => {
   }
 };
 
-export const updatePassword = async (phoneNumber, newPassword) => {
-  return apiCall("post", "/auth/reset-password", { phone: phoneNumber, password: newPassword }, { "Content-Type": "application/json" });
-};
+export const updatePassword = async (phoneNumber, newPassword) =>
+  apiCall("post", "/auth/reset-password", { phone: phoneNumber, password: newPassword }, { "Content-Type": "application/json" });
 
-export const createUser = async (userData) => {
-  return apiCall("post", "/auth/create-user", userData, { "Content-Type": "application/json" });
-};
+export const createUser = async (userData) =>
+  apiCall("post", "/auth/create-user", userData, { "Content-Type": "application/json" });
 
 // ------------------------------
 // Dynamic Form Fields (Event Fields) Endpoints
 // ------------------------------
-export const getFormFields = async () => {
-  return apiCall("get", "/event-fields");
-};
+export const getFormFields = async () => apiCall("get", "/event-fields");
 
-export const createFormField = async (fieldData) => {
-  return apiCall("post", "/event-fields", fieldData, { "Content-Type": "application/json" });
-};
+export const createFormField = async (fieldData) =>
+  apiCall("post", "/event-fields", fieldData, { "Content-Type": "application/json" });
 
-export const updateFormField = async (id, fieldData) => {
-  return apiCall("put", `/event-fields/${id}`, fieldData, { "Content-Type": "application/json" });
-};
+export const updateFormField = async (id, fieldData) =>
+  apiCall("put", `/event-fields/${id}`, fieldData, { "Content-Type": "application/json" });
 
-export const deleteFormField = async (id) => {
-  return apiCall("delete", `/event-fields/${id}`);
-};
+export const deleteFormField = async (id) =>
+  apiCall("delete", `/event-fields/${id}`);
 
-export const updateFieldOrder = async (orderArray) => {
-  return apiCall("put", "/event-fields/order", orderArray, { "Content-Type": "application/json" });
-};
+export const updateFieldOrder = async (orderArray) =>
+  apiCall("put", "/event-fields/order", orderArray, { "Content-Type": "application/json" });
 
 // ------------------------------
 // Import Users (Excel) Endpoints
@@ -393,22 +357,18 @@ export const importUsers = async (file, token) => {
 // ------------------------------
 // New: Add Phone Number (Admin Pre-Populate)
 // ------------------------------
-export const addPhoneNumber = async (phoneData, token) => {
-  return apiCall("post", "/auth/add-phone", phoneData, {
+export const addPhoneNumber = async (phoneData, token) =>
+  apiCall("post", "/auth/add-phone", phoneData, {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   });
-};
 
 // ------------------------------
 // Stats Endpoints
 // ------------------------------
-export const getStats = async () => {
-  return apiCall("get", "/stats");
-};
+export const getStats = async () => apiCall("get", "/stats");
 
-export const updateStats = async (statsData) => {
-  return apiCall("put", "/stats", statsData, { "Content-Type": "application/json" });
-};
+export const updateStats = async (statsData) =>
+  apiCall("put", "/stats", statsData, { "Content-Type": "application/json" });
 
 export default api;
