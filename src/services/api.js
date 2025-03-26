@@ -37,30 +37,38 @@ export const getCsrfToken = async () => {
 // ------------------------------
 const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
   try {
-    // Only attach the CSRF token if needed (e.g., for non-GET requests).
     const headers = { ...extraHeaders };
     if (method.toLowerCase() !== "get") {
       const csrfToken = await getCsrfToken();
       headers["x-csrf-token"] = csrfToken;
     }
+
     const config = {
       method,
       url,
       data,
       headers,
     };
+
     const response = await api(config);
     return response.data;
   } catch (error) {
-    console.error(`API Error: ${method.toUpperCase()} ${url}`, error);
-    // Optionally clear the CSRF token cache if error indicates an invalid token
+    if (error.response) {
+      console.error(`API Error: ${method.toUpperCase()} ${url}`, error.response.data);
+    } else {
+      console.error(`API Error: ${method.toUpperCase()} ${url}`, error.message);
+    }
+
+    // Reset CSRF token if forbidden error
     if (error.response && error.response.status === 403) {
       cachedCsrfToken = null;
     }
+
     throw error;
   }
 };
 
+    // Optionally clear the CS
 // ------------------------------
 // Books Endpoints
 // ------------------------------
