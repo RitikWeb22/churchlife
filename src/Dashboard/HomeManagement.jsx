@@ -5,7 +5,7 @@ import { getHomeConfig, updateHomeConfig } from "../services/api";
 import { FaHome, FaBullhorn, FaListUl, FaCalendarAlt } from "react-icons/fa";
 
 const HomeManagementModern = () => {
-  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseURL ="https://churchlife.vercel.app/api";
 
   const [activeTab, setActiveTab] = useState("home");
   const [mainText, setMainText] = useState("Welcome to the Church Life");
