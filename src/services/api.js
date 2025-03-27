@@ -276,37 +276,26 @@ export const getHomeConfig = async () => {
   return apiCall("get", "/home");
 };
 
-export const updateHomeConfig = async (data, files = {}) => {
+export const updateHomeConfig = async (data, files) => {
   const formData = new FormData();
+  if (data.mainText) formData.append("mainText", data.mainText);
+  if (data.sections) formData.append("sections", JSON.stringify(data.sections));
+  if (data.bannerTitle) formData.append("bannerTitle", data.bannerTitle);
+  if (files.banner) formData.append("banner", files.banner);
+  if (files.lightBg) formData.append("lightBg", files.lightBg);
+  if (files.darkBg) formData.append("darkBg", files.darkBg);
+  if (files.eventCalendarPdf) formData.append("eventCalendarPdf", files.eventCalendarPdf);
+  if (files.eventCalendarBanner) formData.append("eventCalendarBanner", files.eventCalendarBanner);
 
-  if (data.mainText !== undefined) {
-    formData.append("mainText", data.mainText);
-  }
-  if (data.sections !== undefined) {
-    const sectionsValue =
-      typeof data.sections === "string" ? data.sections : JSON.stringify(data.sections);
-    formData.append("sections", sectionsValue);
-  }
-  if (data.bannerTitle !== undefined) {
-    formData.append("bannerTitle", data.bannerTitle);
-  }
-  if (data.latestUpdates !== undefined) {
-    const updatesValue =
-      typeof data.latestUpdates === "string" ? data.latestUpdates : JSON.stringify(data.latestUpdates);
-    formData.append("latestUpdates", updatesValue);
-  }
-  if (files.eventCalendarPdf) {
-    formData.append("eventCalendarPdf", files.eventCalendarPdf);
-  } else {
-    console.warn("No eventCalendarPdf file found in files object");
-  }
-
-  return apiCall("put", "api/home", formData);
+  const csrfToken = await getCsrfToken();
+  const response = await api.put("/home", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      "x-csrf-token": csrfToken,
+    },
+  });
+  return response.data;
 };
-
-export const updateHomeText = async (data) =>
-  apiCall("patch", "/home/text", data, { "Content-Type": "application/json" });
-
 // ------------------------------
 // Phone-based Verification Endpoints
 // ------------------------------
