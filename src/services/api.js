@@ -301,7 +301,7 @@ export const updateHomeConfig = async (data, files = {}) => {
     console.warn("No eventCalendarPdf file found in files object");
   }
 
-  return apiCall("put", "/home", formData);
+  return apiCall("put", "api/home", formData);
 };
 
 export const updateHomeText = async (data) =>
