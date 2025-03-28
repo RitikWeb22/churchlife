@@ -293,7 +293,6 @@ export const updateHomeConfig = async (data, files = {}) => {
     formData.append("mainText", data.mainText);
   }
   if (data.sections !== undefined) {
-    // Stringify if sections is not a string already
     const sectionsValue =
       typeof data.sections === "string" ? data.sections : JSON.stringify(data.sections);
     formData.append("sections", sectionsValue);
@@ -302,7 +301,6 @@ export const updateHomeConfig = async (data, files = {}) => {
     formData.append("bannerTitle", data.bannerTitle);
   }
   if (data.latestUpdates !== undefined) {
-    // Ensure latestUpdates is stringified (e.g. JSON string) if it's not already a string
     const updatesValue =
       typeof data.latestUpdates === "string"
         ? data.latestUpdates
@@ -315,7 +313,8 @@ export const updateHomeConfig = async (data, files = {}) => {
     console.warn("No eventCalendarPdf file found in files object");
   }
 
-  return apiCall("put", "/home", formData, { "Content-Type": "multipart/form-data" });
+  // Remove the explicit "Content-Type" header; let the browser set it
+  return apiCall("put", "/home", formData, { /* "Content-Type": "multipart/form-data" */ });
 };
 
 // For text-only updates (PATCH)
