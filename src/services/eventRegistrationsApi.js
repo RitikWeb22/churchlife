@@ -1,22 +1,6 @@
-// services/eventRegistrationsApi.js
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://churchbackendlife.onrender.com/api";
-
-/**
- * Helper: Fetch CSRF token.
- * @returns {Promise<string>} The CSRF token.
- * @throws {Error} If the token retrieval fails.
- */
-export const getCsrfToken = async () => {
-    try {
-        const { data } = await axios.get(`${API_BASE}/csrf-token`, { withCredentials: true });
-        return data.csrfToken;
-    } catch (error) {
-        console.error("Error fetching CSRF token:", error.response?.data || error.message);
-        throw new Error("Failed to fetch CSRF token");
-    }
-};
 
 /**
  * Fetch all event registrations.
@@ -43,9 +27,7 @@ export async function getRegistrations() {
  */
 export async function deleteRegistration(regId) {
     try {
-        const csrfToken = await getCsrfToken();
         const response = await axios.delete(`${API_BASE}/event-registrations/${regId}`, {
-            headers: { "x-csrf-token": csrfToken },
             withCredentials: true,
         });
         return response.data;
@@ -54,5 +36,3 @@ export async function deleteRegistration(regId) {
         throw new Error("Failed to delete event registration");
     }
 }
-
-// Optionally, add a createRegistration endpoint if needed.
