@@ -44,7 +44,6 @@ const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
   }
 };
 
-
 // ------------------------------
 // Books Endpoints
 // ------------------------------
@@ -285,7 +284,8 @@ export const getHomeConfig = async () => {
   return apiCall("get", "/home");
 };
 
-// For updates that include file uploads (PUT)
+// Updated: Home Config Update Endpoint (with file upload)
+// This function appends the CSRF token as a form field and does not manually set the Content-Type header.
 export const updateHomeConfig = async (data, files = {}) => {
   const formData = new FormData();
 
@@ -313,15 +313,18 @@ export const updateHomeConfig = async (data, files = {}) => {
     console.warn("No eventCalendarPdf file found in files object");
   }
 
-  // Remove the explicit "Content-Type" header; let the browser set it
-  return apiCall("put", "/home", formData, { /* "Content-Type": "multipart/form-data" */ });
+  // Append the CSRF token as a form field so that csurf can find it in the multipart data
+  const csrfToken = await getCsrfToken();
+  formData.append("_csrf", csrfToken);
+
+  // Do not explicitly set the Content-Type header to allow Axios to set it properly
+  return apiCall("put", "/home", formData);
 };
 
 // For text-only updates (PATCH)
 export const updateHomeText = async (data) => {
   return apiCall("patch", "/home/text", data, { "Content-Type": "application/json" });
 };
-
 
 // ------------------------------
 // Phone-based Verification Endpoints
