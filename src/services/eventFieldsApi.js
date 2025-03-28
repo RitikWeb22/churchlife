@@ -1,21 +1,6 @@
-// services/eventFieldsApi.js
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://churchbackendlife.onrender.com/api";
-
-/**
- * Helper: Fetch CSRF Token.
- * Sends a GET request to the CSRF endpoint and returns the token.
- */
-export const getCsrfToken = async () => {
-    try {
-        const { data } = await axios.get(`${API_BASE}/csrf-token`, { withCredentials: true });
-        return data.csrfToken;
-    } catch (error) {
-        console.error("Error fetching CSRF token:", error.response?.data || error.message);
-        throw new Error("Failed to fetch CSRF token");
-    }
-};
 
 /**
  * Fetch all dynamic event form fields.
@@ -42,9 +27,7 @@ export async function getFormFields() {
  */
 export async function createFormField(fieldData) {
     try {
-        const csrfToken = await getCsrfToken();
         const response = await axios.post(`${API_BASE}/event-fields`, fieldData, {
-            headers: { "x-csrf-token": csrfToken },
             withCredentials: true,
         });
         return response.data;
@@ -64,9 +47,7 @@ export async function createFormField(fieldData) {
  */
 export async function updateFormField(fieldId, fieldData) {
     try {
-        const csrfToken = await getCsrfToken();
         const response = await axios.put(`${API_BASE}/event-fields/${fieldId}`, fieldData, {
-            headers: { "x-csrf-token": csrfToken },
             withCredentials: true,
         });
         return response.data;
@@ -85,9 +66,7 @@ export async function updateFormField(fieldId, fieldData) {
  */
 export async function deleteFormField(fieldId) {
     try {
-        const csrfToken = await getCsrfToken();
         const response = await axios.delete(`${API_BASE}/event-fields/${fieldId}`, {
-            headers: { "x-csrf-token": csrfToken },
             withCredentials: true,
         });
         return response.data;
@@ -106,9 +85,7 @@ export async function deleteFormField(fieldId) {
  */
 export async function updateDynamicFieldOrdering(orderArray) {
     try {
-        const csrfToken = await getCsrfToken();
         const response = await axios.put(`${API_BASE}/event-fields/order`, orderArray, {
-            headers: { "x-csrf-token": csrfToken },
             withCredentials: true,
         });
         return response.data;
