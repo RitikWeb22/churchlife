@@ -172,7 +172,7 @@ const Auth = () => {
         if (otpResponse.otp) {
           console.log("OTP (for development):", otpResponse.otp);
         }
-        toast.success("OTP sent to your phone number! (Check SMS or console)");
+        toast.success("OTP sent to your registed Email !");
         setForgotStep(2);
       } catch (error) {
         toast.error("Error sending OTP. Please try again.");
