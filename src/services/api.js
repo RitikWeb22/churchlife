@@ -12,29 +12,15 @@ const api = axios.create({
 });
 
 // ------------------------------
-// CSRF Token Helper
-// ------------------------------
-export const getCsrfToken = async () => {
-  try {
-    const { data } = await api.get("/csrf-token");
-    return data.csrfToken;
-  } catch (error) {
-    console.error("Failed to fetch CSRF token:", error);
-    throw error;
-  }
-};
-
-// ------------------------------
 // Axios Wrapper for Consistent API Calls
 // ------------------------------
 const apiCall = async (method, url, data = {}, extraHeaders = {}) => {
   try {
-    const csrfToken = await getCsrfToken();
     const config = {
       method,
       url,
       data,
-      headers: { "x-csrf-token": csrfToken, ...extraHeaders },
+      headers: { ...extraHeaders },
     };
     const response = await api(config);
     return response.data;
@@ -173,7 +159,7 @@ export const createAnnouncement = async (payload, imageFile) => {
   if (imageFile) {
     formData.append("image", imageFile);
   }
-  // Remove "Content-Type" header for FormData; let the browser set it automatically.
+  // Let the browser set the proper Content-Type.
   return apiCall("post", "/announcements", formData);
 };
 
@@ -258,7 +244,6 @@ export const getContacts = async () => {
   return apiCall("get", "/contacts");
 };
 
-// New: Delete Contact Endpoint
 export const deleteContact = async (id) => {
   return apiCall("delete", `/contacts/${id}`);
 };
@@ -284,8 +269,6 @@ export const getHomeConfig = async () => {
   return apiCall("get", "/home");
 };
 
-// Updated: Home Config Update Endpoint (with file upload)
-// This function appends the CSRF token as a form field and does not manually set the Content-Type header.
 export const updateHomeConfig = async (data, files = {}) => {
   const formData = new FormData();
 
@@ -313,11 +296,7 @@ export const updateHomeConfig = async (data, files = {}) => {
     console.warn("No eventCalendarPdf file found in files object");
   }
 
-  // Append the CSRF token as a form field so that csurf can find it in the multipart data
-  const csrfToken = await getCsrfToken();
-  formData.append("_csrf", csrfToken);
-
-  // Do not explicitly set the Content-Type header to allow Axios to set it properly
+  // No CSRF token appended here as CSRF is removed
   return apiCall("put", "/home", formData);
 };
 
