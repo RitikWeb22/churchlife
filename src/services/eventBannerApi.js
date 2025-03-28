@@ -3,16 +3,6 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://churchbackendlife.onrender.com";
 
 /**
- * Helper: Fetch CSRF Token.
- * Retrieves the CSRF token from the server using the withCredentials flag.
- * @returns {Promise<string>} The CSRF token.
- */
-async function getCsrfToken() {
-    const response = await axios.get(`${BASE_URL}/csrf-token`, { withCredentials: true });
-    return response.data.csrfToken;
-}
-
-/**
  * Fetches the Event Banner.
  * @param {string} token - The authentication token.
  * @returns {Promise<Object>} - The event banner data.
@@ -40,7 +30,6 @@ export async function getEventBanner(token) {
  */
 export async function updateEventBanner(title, imageFile, token) {
     try {
-        const csrfToken = await getCsrfToken(); // Retrieve the CSRF token
         const formData = new FormData();
         formData.append("title", title);
         if (imageFile) {
@@ -51,7 +40,6 @@ export async function updateEventBanner(title, imageFile, token) {
             headers: {
                 "Content-Type": "multipart/form-data",
                 Authorization: `Bearer ${token}`,
-                "x-csrf-token": csrfToken, // Include CSRF token in header
             },
             withCredentials: true,
         });
